@@ -1,0 +1,8 @@
+{
+  "name": "p3forge-scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@azure/identity": "^4.4.0"
+  }
+}

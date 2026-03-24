@@ -1,0 +1,50 @@
+name: P3 Forge — Power Automate Build
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: 'Ticket ID'
+        required: true
+      pa_specs:
+        description: 'PA flow specs JSON'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+
+      - name: Authenticate Power Platform
+        run: |
+          pac auth create \
+            --url ${{ secrets.PP_ENV_URL }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+
+      - name: Export existing flows
+        run: |
+          echo '${{ inputs.pa_specs }}' > /tmp/pa-specs.json
+          # Export each affected flow for modification
+          for flow in $(jq -r '.flow_specs[].flow_name' /tmp/pa-specs.json); do
+            pac flow export --name "$flow" --output ./flows/ || true
+          done
+
+      - name: Import modified flows
+        run: |
+          for zip in ./flows/*.zip; do
+            [ -f "$zip" ] && pac flow import --path "$zip"
+          done
+
+      - name: Activate flows
+        run: |
+          for flow in $(jq -r '.flow_specs[].flow_name' /tmp/pa-specs.json); do
+            pac flow activate --name "$flow" || true
+          done
+
+      - name: Report result
+        run: echo "PA build complete for T-${{ inputs.ticket_id }}"

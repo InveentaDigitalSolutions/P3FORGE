@@ -1,0 +1,71 @@
+name: P3 Forge — Code App Build
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: 'Ticket ID (e.g. T-0042)'
+        required: true
+      build_plan_id:
+        description: 'Build plan record ID'
+        required: true
+      codeapp_spec:
+        description: 'Code App spec JSON'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Create feature branch
+        run: |
+          git checkout -b p3f/T-${{ inputs.ticket_id }}
+          git push -u origin p3f/T-${{ inputs.ticket_id }}
+
+      - name: Apply code changes via Claude Code
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "Claude Code applies changes from codeapp_spec"
+          echo '${{ inputs.codeapp_spec }}' > /tmp/spec.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run tests
+        run: npm test -- --ci --passWithNoTests
+
+      - name: Commit and push
+        run: |
+          git add -A
+          git commit -m "feat(T-${{ inputs.ticket_id }}): apply code changes"
+          git push
+
+      - name: Create PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
+        run: |
+          gh pr create \
+            --base main \
+            --head p3f/T-${{ inputs.ticket_id }} \
+            --title "T-${{ inputs.ticket_id }}: Code App changes" \
+            --body "Automated PR from P3 Forge build agent."
+
+      - name: Auto-merge PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
+        run: |
+          gh pr merge p3f/T-${{ inputs.ticket_id }} --squash --delete-branch --auto

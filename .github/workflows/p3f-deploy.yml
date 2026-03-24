@@ -1,0 +1,116 @@
+name: P3 Forge — Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: 'Ticket ID'
+        required: true
+      target_env_url:
+        description: 'Target environment URL'
+        required: true
+      components:
+        description: 'JSON array of components to deploy'
+        required: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ inputs.target_env_url }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+      - name: Snapshot current state
+        run: |
+          pac solution export --name P3Forge_v1 --path ./snapshot/ --managed false
+          echo "Snapshot stored for T-${{ inputs.ticket_id }}"
+
+  dataverse:
+    needs: snapshot
+    runs-on: ubuntu-latest
+    if: contains(inputs.components, 'dataverse')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ inputs.target_env_url }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+      - name: Import Dataverse solution
+        run: pac solution import --path ./solution/P3Forge_v1.zip --activate-plugins
+
+  pa-flows:
+    needs: dataverse
+    runs-on: ubuntu-latest
+    if: contains(inputs.components, 'power_automate')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ inputs.target_env_url }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+      - name: Import and activate flows
+        run: |
+          for zip in ./flows/*.zip; do
+            [ -f "$zip" ] && pac flow import --path "$zip"
+          done
+
+  codeapp:
+    needs: pa-flows
+    runs-on: ubuntu-latest
+    if: contains(inputs.components, 'code_app')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ inputs.target_env_url }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+      - name: Build and publish Code App
+        run: |
+          npm ci
+          npm run build
+          pac canvas pack --sources ./src --msapp ./build/P3ForgeManager.msapp
+          pac canvas publish --environment ${{ inputs.target_env_url }} --name P3ForgeManager
+
+  copilot:
+    needs: codeapp
+    runs-on: ubuntu-latest
+    if: contains(inputs.components, 'copilot_studio')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ inputs.target_env_url }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+      - name: Publish Copilot Studio
+        run: |
+          pac copilot topic import --bot-name "P3 Forge Agent" --input ./topics/
+          pac copilot publish --bot-name "P3 Forge Agent"

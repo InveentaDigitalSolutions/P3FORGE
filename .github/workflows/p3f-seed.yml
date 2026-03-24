@@ -1,0 +1,28 @@
+name: P3 Forge — Seed Data
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type SEED to confirm'
+        required: true
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'SEED'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ secrets.PP_ENV_URL }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+
+      - name: Import seed data
+        run: pac data import --data ./seed/seed-data.zip

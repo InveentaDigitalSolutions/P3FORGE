@@ -1,0 +1,41 @@
+name: P3 Forge — Dataverse Build
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: 'Ticket ID'
+        required: true
+      dataverse_spec:
+        description: 'Dataverse schema spec JSON'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+
+      - name: Authenticate Power Platform
+        run: |
+          pac auth create \
+            --url ${{ secrets.PP_ENV_URL }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+
+      - name: Export current solution
+        run: pac solution export --name P3Forge_v1 --path ./solution/ --managed false
+
+      - name: Apply schema changes
+        run: |
+          echo '${{ inputs.dataverse_spec }}' > /tmp/dv-spec.json
+          echo "Apply validated_changes to customizations.xml"
+
+      - name: Import updated solution
+        run: pac solution import --path ./solution/P3Forge_v1.zip --activate-plugins
+
+      - name: Report result
+        run: echo "Dataverse build complete for T-${{ inputs.ticket_id }}"

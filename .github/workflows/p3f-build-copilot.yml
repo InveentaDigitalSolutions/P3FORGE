@@ -1,0 +1,44 @@
+name: P3 Forge — Copilot Studio Build
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: 'Ticket ID'
+        required: true
+      topic_specs:
+        description: 'Copilot Studio topic specs JSON'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+
+      - name: Authenticate Power Platform
+        run: |
+          pac auth create \
+            --url ${{ secrets.PP_ENV_URL }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+
+      - name: Export existing topics
+        run: pac copilot topic export --bot-name "P3 Forge Agent" --output ./topics/
+
+      - name: Apply topic changes
+        run: |
+          echo '${{ inputs.topic_specs }}' > /tmp/topic-specs.json
+          echo "Modify YAML topic files per spec"
+
+      - name: Import updated topics
+        run: pac copilot topic import --bot-name "P3 Forge Agent" --input ./topics/
+
+      - name: Publish agent
+        run: pac copilot publish --bot-name "P3 Forge Agent"
+
+      - name: Report result
+        run: echo "Copilot Studio build complete for T-${{ inputs.ticket_id }}"

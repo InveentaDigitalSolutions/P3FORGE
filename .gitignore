@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build
+build/
+dist/
+*.msapp
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+
+# PAC CLI
+.pac/

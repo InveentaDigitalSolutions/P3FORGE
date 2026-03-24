@@ -1,0 +1,43 @@
+name: P3 Forge — Validate
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'solution/**'
+      - 'flows/**'
+      - 'topics/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm test -- --ci --passWithNoTests
+
+  pac-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ secrets.PP_ENV_URL }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+      - name: Validate solution
+        run: |
+          if [ -f ./solution/P3Forge_v1.zip ]; then
+            pac solution check --path ./solution/P3Forge_v1.zip
+          fi

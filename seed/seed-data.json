@@ -1,0 +1,54 @@
+{
+  "p3f_client": [
+    {
+      "p3f_name": "P3 Internal",
+      "p3f_autonomytier": 1,
+      "p3f_defaultlanguage": 2,
+      "p3f_active": true,
+      "p3f_onboardingcomplete": true
+    }
+  ],
+  "p3f_project": [
+    {
+      "p3f_name": "P3 Forge Platform",
+      "p3f_techstack": "Power Apps Code App · Dataverse · TypeScript · Power Automate",
+      "p3f_status": 1
+    }
+  ],
+  "p3f_app": [
+    {
+      "p3f_name": "P3 Forge Manager App",
+      "p3f_publishedversion": "1.0.0"
+    }
+  ],
+  "p3f_ratecard": [
+    { "p3f_label": "Bug — Small",             "p3f_tickettype": 100, "p3f_complexity": 1, "p3f_baseprice": 400,   "p3f_basehours": 3   },
+    { "p3f_label": "Bug — Medium",            "p3f_tickettype": 100, "p3f_complexity": 2, "p3f_baseprice": 900,   "p3f_basehours": 8   },
+    { "p3f_label": "Bug — Large",             "p3f_tickettype": 100, "p3f_complexity": 3, "p3f_baseprice": 2000,  "p3f_basehours": 20  },
+    { "p3f_label": "Bug — XL",               "p3f_tickettype": 100, "p3f_complexity": 4, "p3f_baseprice": 4000,  "p3f_basehours": 40  },
+    { "p3f_label": "Change Request — Small",  "p3f_tickettype": 200, "p3f_complexity": 1, "p3f_baseprice": 800,   "p3f_basehours": 6   },
+    { "p3f_label": "Change Request — Medium", "p3f_tickettype": 200, "p3f_complexity": 2, "p3f_baseprice": 2400,  "p3f_basehours": 20  },
+    { "p3f_label": "Change Request — Large",  "p3f_tickettype": 200, "p3f_complexity": 3, "p3f_baseprice": 5500,  "p3f_basehours": 45  },
+    { "p3f_label": "Change Request — XL",     "p3f_tickettype": 200, "p3f_complexity": 4, "p3f_baseprice": 12000, "p3f_basehours": 100 }
+  ],
+  "p3f_dataretentionpolicy": [
+    {
+      "p3f_retentionperiodmonths": 24,
+      "p3f_anonymiseonexpiry": true,
+      "p3f_deleteonexpiry": false,
+      "p3f_legalhold": false
+    }
+  ],
+  "p3f_agentprompt": [
+    { "p3f_agentname": "intake-agent",           "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "requirement-agent",       "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "assessment-agent",        "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "architect-agent",         "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "pa-expert-agent",         "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "codeapp-expert-agent",    "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "dataverse-expert-agent",  "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "offer-generator",         "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "qa-agent",                "p3f_version": 1, "p3f_model": "gpt-4o",      "p3f_active": true },
+    { "p3f_agentname": "duplicate-detector",      "p3f_version": 1, "p3f_model": "gpt-4o-mini", "p3f_active": true }
+  ]
+}

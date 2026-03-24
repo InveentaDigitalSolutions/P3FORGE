@@ -1,0 +1,46 @@
+name: P3 Forge — Rollback
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: 'Ticket ID to rollback'
+        required: true
+      target_env_url:
+        description: 'Target environment URL'
+        required: true
+      snapshot_dv:
+        description: 'URL to DV solution snapshot ZIP'
+        required: true
+      snapshot_pa:
+        description: 'URL to PA flow snapshot ZIP'
+        required: true
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PAC CLI
+        run: npm install -g @microsoft/powerplatform-cli
+
+      - name: Auth
+        run: |
+          pac auth create \
+            --url ${{ inputs.target_env_url }} \
+            --applicationId ${{ secrets.PP_APP_ID }} \
+            --clientSecret ${{ secrets.PP_APP_SECRET }} \
+            --tenant ${{ secrets.PP_TENANT_ID }}
+
+      - name: Rollback Dataverse
+        run: |
+          curl -Lo /tmp/snapshot-dv.zip "${{ inputs.snapshot_dv }}"
+          pac solution import --path /tmp/snapshot-dv.zip --activate-plugins
+
+      - name: Rollback Power Automate
+        run: |
+          curl -Lo /tmp/snapshot-pa.zip "${{ inputs.snapshot_pa }}"
+          pac flow import --path /tmp/snapshot-pa.zip
+
+      - name: Report
+        run: echo "Rollback complete for T-${{ inputs.ticket_id }}"
